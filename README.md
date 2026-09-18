@@ -7,12 +7,18 @@
 **L'application web personnelle de tracking de santé pensée pour éliminer la frustration des modèles freemium.**  
 *Zéro publicité • Zéro paywall • Calculs caloriques honnêtes par fourchettes • Zéro pesée d'aliments au gramme.*
 
-[![Next.js](https://img.shields.io/badge/Next.js-15%2B_(App_Router)-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16%2B_(App_Router)-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Modern_UI-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth_%26_Postgres-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
+[![Vercel](https://img.shields.io/badge/Production-metrik--pi.vercel.app-2563EB?style=flat-square&logo=vercel)](https://metrik-pi.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+<br />
+
+👉 **Site en ligne (Production) : [https://metrik-pi.vercel.app](https://metrik-pi.vercel.app)**
+
 
 </div>
 
@@ -133,30 +139,36 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## 🚀 Déploiement en Production sur Vercel (Pérenne & Continu)
 
-Le projet est configuré pour un déploiement continu et automatisé sur [Vercel](https://vercel.com) via GitHub :
+L'application est officiellement déployée et accessible en ligne :
+👉 **[https://metrik-pi.vercel.app](https://metrik-pi.vercel.app)**
 
-### 1. Création du projet sur Vercel
-1. Connectez-vous sur [vercel.com](https://vercel.com) avec votre compte GitHub.
-2. Cliquez sur **"Add New..."** > **"Project"**.
-3. Importez le repository **`maxlamenace33-del/Metrik`**.
-4. Dans les paramètres de build :
-   - **Framework Preset :** Next.js (détecté automatiquement).
-   - **Root Directory :** `./`
-   - **Build Command :** `pnpm build` (ou `next build`).
+### Architecture de Déploiement
+Le projet est lié au repository GitHub `maxlamenace33-del/Metrik` et supporte à la fois le déploiement automatique par commit et le déploiement instantané via la CLI Vercel (`--prebuilt`).
 
-### 2. Configuration des Variables d'Environnement sur Vercel
-Dans l'onglet **Environment Variables**, ajoutez les 4 variables :
+### 1. Variables d'Environnement Configurées sur Vercel
+Dans le dashboard Vercel (**Settings** > **Environment Variables**) :
 - `NEXT_PUBLIC_SUPABASE_URL` : `https://oamtnjveskdtyekizavo.supabase.co`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` : votre clé publique Supabase.
-- `SUPABASE_SERVICE_ROLE_KEY` : votre clé secrète serveur.
-- `NEXT_PUBLIC_APP_URL` : l'URL finale fournie par Vercel (ex. `https://metrik-health.vercel.app`).
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` : votre clé publique Supabase (`sb_publishable_...`)
+- `SUPABASE_SERVICE_ROLE_KEY` : votre clé secrète Supabase (`sb_secret_...`)
+- `NEXT_PUBLIC_APP_URL` : `https://metrik-pi.vercel.app`
 
-### 3. Ajustement de la Redirection dans Supabase Auth
-Une fois le domaine Vercel déployé :
-1. Allez sur votre dashboard **Supabase** > **Authentication** > **URL Configuration**.
-2. Renseignez le **Site URL** avec votre URL Vercel : `https://metrik-health.vercel.app`.
-3. Dans **Redirect URLs**, ajoutez : `https://metrik-health.vercel.app/api/auth/callback`.
-4. À chaque `git push origin main`, Vercel déploie automatiquement la dernière version en production !
+### 2. Configuration Supabase Auth (URLs de redirection)
+Dans le dashboard **Supabase** > **Authentication** > **URL Configuration** :
+- **Site URL :** `https://metrik-pi.vercel.app`
+- **Redirect URLs :**
+  - `https://metrik-pi.vercel.app/**`
+  - `http://localhost:3000/**`
+
+### 3. Commandes de Déploiement CLI
+Pour un déploiement ultra-rapide sans dépendre de la file d'attente des serveurs cloud :
+```bash
+# 1. Compilation locale optimisée Next.js (Turbopack, ~1s)
+npx vercel build --prod
+
+# 2. Envoi direct des fichiers pré-compilés sur le CDN Vercel (~5s)
+npx vercel deploy --prebuilt --prod
+```
+
 
 ---
 
@@ -225,10 +237,14 @@ flowchart LR
 - [x] Composant Heatmap de consistance sportive style GitHub (52 semaines)
 - [x] Modal de pesée rapide en 1 clic
 
-### Phase 5 : Journal Nutrition Simplifié & Optimisations
+### Phase 5 : Journal Nutrition Simplifié & Équilibre Énergétique
 - [x] Journal de repas rapide (Petit-déjeuner, Déjeuner, Dîner, Snack) avec estimation libre
 - [x] Jauge de balance énergétique journalière (TDEE + Sport vs Calories ingérées)
-- [x] Bar chart hebdomadaire dépenses vs apports
-- [ ] Préparation PWA (manifest, service worker et icones mobiles)
-- [ ] Bar chart hebdomadaire dépenses vs apports
-- [ ] Préparation PWA (manifest, service worker et icones mobiles)
+- [x] Bar chart hebdomadaire comparatif dépenses vs apports
+- [x] Déploiement en production sur Vercel (`https://metrik-pi.vercel.app`)
+
+### Évolutions & Améliorations Futures
+- [ ] Préparation PWA (manifest, installation écran d'accueil iOS/Android, icônes mobiles)
+- [ ] Export complet des données utilisateur en CSV / JSON (pesées, activités, repas)
+- [ ] Presets et raccourcis de repas fréquents (Open Food Facts / suggestions rapides)
+
