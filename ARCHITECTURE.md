@@ -366,3 +366,21 @@ L'alternance Dark / Light mode est gérée par le composant `ThemeProvider` de `
 2. **Dynamic Server Rendering avec Suspense :** Les composants statiques (shell, sidebar) s'affichent instantanément, tandis que les flux de données (feed d'activités, historique de poids) sont streamés en parallèle.
 3. **Database Indexing :** Des index composites PostgreSQL B-tree sur `(user_id, performed_at DESC)` et `(user_id, logged_at DESC)` garantissent des requêtes instantanées (< 10ms) même après plusieurs années d'utilisation continue.
 4. **Calculs purs déportés :** BMR, TDEE, moyennes mobiles et fourchettes METs sont implémentés dans des fonctions pures et testées unitairement (`/lib/calculations`), garantissant un comportement identique côté serveur et côté client.
+
+---
+
+## 8. Déploiement & Infrastructure Vercel
+
+### 8.1 Pipeline CI/CD Automatisé
+- **Hébergement :** Vercel Edge Network & Serverless Functions.
+- **Déclenchement :** Continuous Deployment à chaque commit pushé sur la branche `main` de `maxlamenace33-del/Metrik`.
+- **Build Step :** `pnpm build` avec vérification de typage TypeScript strict et génération statique/hybride des routes.
+
+### 8.2 Variables d'Environnement Vercel
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_APP_URL`
+
+### 8.3 Synchronisation des Redirections Auth
+En production, le domaine généré par Vercel (ou le domaine personnalisé rattaché) est configuré dans le dashboard Supabase sous **Authentication > URL Configuration > Site URL** et **Redirect URLs** afin que les Magic Links et confirmations de compte redirigent vers l'application en ligne de façon transparente.

@@ -131,6 +131,35 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ---
 
+## 🚀 Déploiement en Production sur Vercel (Pérenne & Continu)
+
+Le projet est configuré pour un déploiement continu et automatisé sur [Vercel](https://vercel.com) via GitHub :
+
+### 1. Création du projet sur Vercel
+1. Connectez-vous sur [vercel.com](https://vercel.com) avec votre compte GitHub.
+2. Cliquez sur **"Add New..."** > **"Project"**.
+3. Importez le repository **`maxlamenace33-del/Metrik`**.
+4. Dans les paramètres de build :
+   - **Framework Preset :** Next.js (détecté automatiquement).
+   - **Root Directory :** `./`
+   - **Build Command :** `pnpm build` (ou `next build`).
+
+### 2. Configuration des Variables d'Environnement sur Vercel
+Dans l'onglet **Environment Variables**, ajoutez les 4 variables :
+- `NEXT_PUBLIC_SUPABASE_URL` : `https://oamtnjveskdtyekizavo.supabase.co`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` : votre clé publique Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY` : votre clé secrète serveur.
+- `NEXT_PUBLIC_APP_URL` : l'URL finale fournie par Vercel (ex. `https://metrik-health.vercel.app`).
+
+### 3. Ajustement de la Redirection dans Supabase Auth
+Une fois le domaine Vercel déployé :
+1. Allez sur votre dashboard **Supabase** > **Authentication** > **URL Configuration**.
+2. Renseignez le **Site URL** avec votre URL Vercel : `https://metrik-health.vercel.app`.
+3. Dans **Redirect URLs**, ajoutez : `https://metrik-health.vercel.app/api/auth/callback`.
+4. À chaque `git push origin main`, Vercel déploie automatiquement la dernière version en production !
+
+---
+
 ## 🗄 Mise en Place de la Base de Données
 
 Le schéma PostgreSQL inclut :

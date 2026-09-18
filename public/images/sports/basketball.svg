@@ -1,0 +1,25 @@
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad_basketball" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9A3412" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <radialGradient id="circle_basketball" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDBA74" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#EA580C" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#grad_basketball)" />
+  <circle cx="300" cy="200" r="160" fill="url(#circle_basketball)" />
+  <g opacity="0.1" stroke="white" stroke-width="1.5">
+    <circle cx="300" cy="200" r="100" stroke-dasharray="4 4" />
+    <circle cx="300" cy="200" r="180" stroke-dasharray="8 8" />
+  </g>
+  <text x="300" y="190" font-size="72" text-anchor="middle" dominant-baseline="central">
+    🏀
+  </text>
+  <text x="300" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1.5">
+    BASKETBALL
+  </text>
+  <rect x="260" y="305" width="80" height="3" rx="1.5" fill="#FDBA74" opacity="0.8" />
+</svg>
