@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/card";
 import { QuickWeightDialog } from "@/components/weight/quick-weight-dialog";
 import { ActivityDialog } from "@/components/activities/activity-dialog";
+import { MealDialog } from "@/components/nutrition/meal-dialog";
+import { DailyBalanceGauge } from "@/components/nutrition/daily-balance-gauge";
 import { WeightChart } from "@/components/dashboard/weight-chart";
 import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { WeeklyCalorieBar } from "@/components/dashboard/weekly-calorie-bar";
@@ -44,6 +46,8 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   // Requêtes parallèles pour un chargement instantané :
   const [
@@ -70,12 +74,18 @@ export default async function DashboardPage() {
       .select("*")
       .eq("user_id", user.id)
       .order("logged_at", { ascending: false })
-      .limit(30),
+      .limit(60),
   ]);
 
   const weightLogs = weightLogsRaw || [];
   const activities = (activitiesRaw || []) as unknown as ActivityWithSport[];
   const meals = mealsRaw || [];
+
+  // Filtrage des éléments d'aujourd'hui pour la jauge
+  const todayMeals = meals.filter((m) => m.logged_at.slice(0, 10) === todayStr);
+  const todayActivities = activities.filter(
+    (a) => a.performed_at.slice(0, 10) === todayStr
+  );
 
   const hasProfile = Boolean(
     profile?.height_cm && profile?.birth_date && profile?.current_weight_kg
@@ -97,6 +107,8 @@ export default async function DashboardPage() {
     ? Number(profile.current_weight_kg)
     : 75;
 
+  const tdeeBase = metabolic ? metabolic.tdeeBase : 2100;
+
   return (
     <div className="space-y-8">
       {/* Header avec bienvenue et boutons d'actions rapides */}
@@ -110,8 +122,16 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <QuickWeightDialog lastWeight={profile?.current_weight_kg} />
+          <MealDialog
+            triggerButton={
+              <Button variant="outline" size="sm" className="gap-2">
+                <Utensils className="h-4 w-4 text-purple-600" />
+                Repas rapide
+              </Button>
+            }
+          />
           <ActivityDialog
             sports={sports || []}
             userWeightKg={userWeight}
@@ -224,25 +244,30 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* 2. Courbe de Poids Interactive avec Recharts (lissage 7j et filtres) */}
+      {/* 2. Jauge de Balance du Jour */}
+      <DailyBalanceGauge
+        todayMeals={todayMeals}
+        todayActivities={todayActivities}
+        tdeeBase={tdeeBase}
+      />
+
+      {/* 3. Courbe de Poids Interactive Recharts (lissage 7j et filtres) */}
       <WeightChart
         logs={weightLogs}
         targetWeightKg={profile?.target_weight_kg}
       />
 
-      {/* 3. Calendrier d'Activité Annuelle façon GitHub (Heatmap 52 semaines) */}
+      {/* 4. Calendrier d'Activité Annuelle façon GitHub (Heatmap 52 semaines) */}
       <ActivityHeatmap activities={activities} />
 
-      {/* 4. Bar Chart Hebdomadaire (Dépenses vs Apports sur 7 jours) */}
-      {metabolic && (
-        <WeeklyCalorieBar
-          activities={activities}
-          meals={meals}
-          dailyBaseTdee={metabolic.tdeeBase}
-        />
-      )}
+      {/* 5. Bar Chart Hebdomadaire (Dépenses vs Apports sur 7 jours) */}
+      <WeeklyCalorieBar
+        activities={activities}
+        meals={meals}
+        dailyBaseTdee={tdeeBase}
+      />
 
-      {/* 5. Dernières Séances Sportives Enregistrées */}
+      {/* 6. Dernières Séances Sportives Enregistrées */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">

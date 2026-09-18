@@ -1,38 +1,98 @@
-import { Utensils, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { redirect } from "next/navigation";
+import { Utensils } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { MealDialog } from "@/components/nutrition/meal-dialog";
+import { DailyBalanceGauge } from "@/components/nutrition/daily-balance-gauge";
+import { MealFeed } from "@/components/nutrition/meal-feed";
+import { calculateMetabolicProfile } from "@/lib/calculations/bmr";
+import type { Metadata } from "next";
 
-export default function NutritionPage() {
+export const metadata: Metadata = {
+  title: "Nutrition Décomplexée — Metrik",
+  description: "Suivez vos apports alimentaires en 5 secondes sans pesée au gramme.",
+};
+
+export default async function NutritionPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Date du jour (format YYYY-MM-DD)
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Requêtes parallèles : profil, repas complets, activités du jour
+  const [{ data: profile }, { data: mealsRaw }, { data: activitiesRaw }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase
+        .from("meal_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("logged_at", { ascending: false }),
+      supabase
+        .from("activities")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("performed_at", `${todayStr}T00:00:00.000Z`),
+    ]);
+
+  const meals = mealsRaw || [];
+  const todayActivities = activitiesRaw || [];
+
+  // Repas d'aujourd'hui
+  const todayMeals = meals.filter((m) => m.logged_at.slice(0, 10) === todayStr);
+
+  // Calcul du TDEE base
+  let tdeeBase = 2100;
+  if (profile?.current_weight_kg && profile?.height_cm && profile?.birth_date) {
+    const metabolic = calculateMetabolicProfile(
+      {
+        weightKg: Number(profile.current_weight_kg),
+        heightCm: Number(profile.height_cm),
+        birthDate: profile.birth_date,
+        gender: profile.gender || "male",
+      },
+      profile.base_activity_level || "sedentary"
+    );
+    tdeeBase = metabolic.tdeeBase;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+            <Utensils className="h-8 w-8 text-primary" />
             Nutrition Décomplexée
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Suivi rapide de vos apports journaliers sans calcul au gramme près.
+            Saisie rapide à la louche : fini de peser vos aliments ou de scanner des codes-barres.
           </p>
         </div>
 
-        <Button className="gap-2 shadow-sm">
-          <Plus className="h-4 w-4" />
-          Enregistrer un repas
-        </Button>
+        <MealDialog />
       </div>
 
-      <Card className="border-dashed border-border/80 p-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 mb-4">
-          <Utensils className="h-6 w-6" />
-        </div>
-        <h3 className="text-base font-bold text-foreground">
-          Journal de Nutrition (Phase 5)
-        </h3>
-        <p className="mt-2 text-xs text-muted-foreground max-w-md mx-auto">
-          Prêt pour la saisie simplifiée des repas en 5 secondes et la jauge de balance
-          énergétique quotidienne.
-        </p>
-      </Card>
+      {/* Jauge de balance du jour */}
+      <DailyBalanceGauge
+        todayMeals={todayMeals}
+        todayActivities={todayActivities}
+        tdeeBase={tdeeBase}
+      />
+
+      {/* Liste des repas par jour */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
+          Journal des Repas
+        </h2>
+        <MealFeed meals={meals} />
+      </div>
     </div>
   );
 }
