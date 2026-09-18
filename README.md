@@ -204,29 +204,31 @@ flowchart LR
 
 ### Phase 1 : Initialisation, Setup Stack & Base de données
 - [x] Spécifications Produit & Architecture (PRD, ARCHITECTURE, DATABASE, README)
-- [ ] Initialisation du projet Next.js 15+ avec Tailwind CSS, shadcn/ui et Lucide Icons
-- [ ] Exécution du script SQL complet dans Supabase (Tables, Triggers, RLS, Storage)
-- [ ] Configuration de `@supabase/ssr` (`client.ts`, `server.ts`, `middleware.ts`)
+- [x] Initialisation du projet Next.js avec Tailwind CSS, shadcn/ui et Lucide Icons
+- [x] Exécution du script SQL complet dans Supabase (Tables, Triggers, RLS, Storage)
+- [x] Configuration de `@supabase/ssr` (`client.ts`, `server.ts`, `middleware.ts`, `proxy.ts`)
 
 ### Phase 2 : Auth & Onboarding Profil / BMR
-- [ ] Pages `/login` et `/register` avec support Email/Mot de passe et Magic Link
-- [ ] Page de profil & formulaire d'onboarding (Taille, Sexe, Date de naissance, Niveau d'activité)
-- [ ] Implémentation de la bibliothèque de calculs purs (`bmr.ts`, formule Mifflin-St Jeor & TDEE)
+- [x] Pages `/login` et `/register` avec support Email/Mot de passe et Magic Link
+- [x] Page de profil & formulaire d'onboarding (Taille, Sexe, Date de naissance, Niveau d'activité)
+- [x] Implémentation de la bibliothèque de calculs purs (`bmr.ts`, formule Mifflin-St Jeor & TDEE)
 
 ### Phase 3 : Module Activités Sportives & Feed Style Airbnb
-- [ ] Référentiel des sports et formulaire modal de création d'activité
-- [ ] Calculateur dynamique de calories METs en temps réel ($\pm 10\%$)
-- [ ] Composant d'upload d'image vers Supabase Storage (`activity-images`) avec compression WebP
-- [ ] Feed horizontal style Airbnb avec cards personnalisées et badge d'intensité
+- [x] Référentiel des sports et formulaire modal de création d'activité
+- [x] Calculateur dynamique de calories METs en temps réel ($\pm 10\%$)
+- [x] Composant d'upload d'image vers Supabase Storage (`activity-images`) avec compression WebP
+- [x] Feed horizontal style Airbnb avec cards personnalisées et badge d'intensité
 
 ### Phase 4 : Dashboard Analytics & Data-Visualisation
-- [ ] Cartes KPIs (Dernier poids, variation 7j, bilan calorique, consistance mensuelle)
-- [ ] Graphique de poids Recharts avec courbe de moyenne mobile lissée sur 7 jours
-- [ ] Composant Heatmap de consistance sportive style GitHub (52 semaines)
-- [ ] Modal de pesée rapide en 1 clic
+- [x] Cartes KPIs (Dernier poids, variation 7j, bilan calorique, consistance mensuelle)
+- [x] Graphique de poids Recharts avec courbe de moyenne mobile lissée sur 7 jours
+- [x] Composant Heatmap de consistance sportive style GitHub (52 semaines)
+- [x] Modal de pesée rapide en 1 clic
 
 ### Phase 5 : Journal Nutrition Simplifié & Optimisations
-- [ ] Journal de repas rapide (Petit-déjeuner, Déjeuner, Dîner, Snack) avec estimation libre
-- [ ] Jauge de balance énergétique journalière (TDEE + Sport vs Calories ingérées)
+- [x] Journal de repas rapide (Petit-déjeuner, Déjeuner, Dîner, Snack) avec estimation libre
+- [x] Jauge de balance énergétique journalière (TDEE + Sport vs Calories ingérées)
+- [x] Bar chart hebdomadaire dépenses vs apports
+- [ ] Préparation PWA (manifest, service worker et icones mobiles)
 - [ ] Bar chart hebdomadaire dépenses vs apports
 - [ ] Préparation PWA (manifest, service worker et icones mobiles)
