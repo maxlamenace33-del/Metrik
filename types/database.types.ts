@@ -6,10 +6,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type Gender = 'male' | 'female' | 'other';
-export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
-export type Intensity = 'low' | 'medium' | 'high';
-export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type Gender = "male" | "female" | "other";
+export type ActivityLevel =
+  | "sedentary"
+  | "lightly_active"
+  | "moderately_active"
+  | "very_active";
+export type Intensity = "low" | "medium" | "high";
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 export interface Database {
   public: {
@@ -50,6 +54,7 @@ export interface Database {
           base_activity_level?: ActivityLevel;
           updated_at?: string;
         };
+        Relationships: [];
       };
       weight_logs: {
         Row: {
@@ -73,6 +78,15 @@ export interface Database {
           logged_at?: string;
           notes?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "weight_logs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       sports: {
         Row: {
@@ -105,6 +119,7 @@ export interface Database {
           default_image_url?: string | null;
           icon_name?: string | null;
         };
+        Relationships: [];
       };
       activities: {
         Row: {
@@ -146,6 +161,22 @@ export interface Database {
           notes?: string | null;
           performed_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "activities_sport_id_fkey";
+            columns: ["sport_id"];
+            isOneToOne: false;
+            referencedRelation: "sports";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activities_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       meal_logs: {
         Row: {
@@ -172,6 +203,15 @@ export interface Database {
           estimated_calories?: number;
           logged_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "meal_logs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
@@ -185,6 +225,9 @@ export interface Database {
       activity_level_enum: ActivityLevel;
       intensity_enum: Intensity;
       meal_type_enum: MealType;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
