@@ -9,8 +9,7 @@ import {
   Sparkles,
   Zap,
   TrendingDown,
-  Calendar,
-  Clock,
+  Plus,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
@@ -21,9 +20,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { QuickWeightDialog } from "@/components/weight/quick-weight-dialog";
+import { ActivityDialog } from "@/components/activities/activity-dialog";
+import { WeightChart } from "@/components/dashboard/weight-chart";
+import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
+import { WeeklyCalorieBar } from "@/components/dashboard/weekly-calorie-bar";
 import { calculateMetabolicProfile, PAL_MULTIPLIERS } from "@/lib/calculations/bmr";
 import { formatDuration, formatCaloriesRange } from "@/lib/utils";
 import type { ActivityWithSport } from "@/types/domain";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard — Metrik",
+  description: "Tableau de bord de suivi fitness, métabolisme, consistance et poids.",
+};
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -35,25 +45,37 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Requêtes parallèles : profil, pesées, activités récentes
-  const [{ data: profile }, { data: weightLogs }, { data: recentActivitiesRaw }] =
-    await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
-      supabase
-        .from("weight_logs")
-        .select("weight_kg, logged_at")
-        .eq("user_id", user.id)
-        .order("logged_at", { ascending: false })
-        .limit(7),
-      supabase
-        .from("activities")
-        .select("*, sports(*)")
-        .eq("user_id", user.id)
-        .order("performed_at", { ascending: false })
-        .limit(3),
-    ]);
+  // Requêtes parallèles pour un chargement instantané :
+  const [
+    { data: profile },
+    { data: sports },
+    { data: weightLogsRaw },
+    { data: activitiesRaw },
+    { data: mealsRaw },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("sports").select("*").order("name"),
+    supabase
+      .from("weight_logs")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("logged_at", { ascending: false }),
+    supabase
+      .from("activities")
+      .select("*, sports(*)")
+      .eq("user_id", user.id)
+      .order("performed_at", { ascending: false }),
+    supabase
+      .from("meal_logs")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("logged_at", { ascending: false })
+      .limit(30),
+  ]);
 
-  const recentActivities = (recentActivitiesRaw || []) as unknown as ActivityWithSport[];
+  const weightLogs = weightLogsRaw || [];
+  const activities = (activitiesRaw || []) as unknown as ActivityWithSport[];
+  const meals = mealsRaw || [];
 
   const hasProfile = Boolean(
     profile?.height_cm && profile?.birth_date && profile?.current_weight_kg
@@ -71,35 +93,33 @@ export default async function DashboardPage() {
       )
     : null;
 
+  const userWeight = profile?.current_weight_kg
+    ? Number(profile.current_weight_kg)
+    : 75;
+
   return (
     <div className="space-y-8">
-      {/* Header Bienvenue */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      {/* Header avec bienvenue et boutons d'actions rapides */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
             Bonjour {profile?.full_name?.split(" ")[0] || "Athlète"} 👋
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Voici votre tableau de bord santé et vos métriques du jour.
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Voici votre tableau de bord santé et vos indicateurs de performance.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/profile">
-            <Button variant="outline" size="sm">
-              Mon Profil & BMR
-            </Button>
-          </Link>
-          <Link href="/activities">
-            <Button size="sm" className="gap-1.5 shadow-sm">
-              <ActivityIcon className="h-4 w-4" />
-              Journal d&apos;activités
-            </Button>
-          </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <QuickWeightDialog lastWeight={profile?.current_weight_kg} />
+          <ActivityDialog
+            sports={sports || []}
+            userWeightKg={userWeight}
+          />
         </div>
       </div>
 
-      {/* Bannière d'onboarding si le profil n'est pas encore complété */}
+      {/* Bannière d'onboarding si le profil n'est pas complété */}
       {!hasProfile && (
         <Card className="border-primary/40 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -108,9 +128,9 @@ export default async function DashboardPage() {
                 <Sparkles className="h-4 w-4" />
                 Complétez votre profil métabolique
               </div>
-              <p className="text-xs text-muted-foreground max-w-xl">
+              <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
                 Renseignez votre taille, date de naissance et poids pour calibrer la
-                formule Mifflin-St Jeor et activer le calculateur de calories METs en temps réel.
+                formule clinique Mifflin-St Jeor et ajuster en direct vos dépenses sportives.
               </p>
             </div>
             <Link href="/profile">
@@ -123,7 +143,7 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Grille des KPIs Rapides */}
+      {/* 1. KPIs Rapides */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Poids Actuel */}
         <Card className="card-hover-effect border-border/60">
@@ -189,7 +209,7 @@ export default async function DashboardPage() {
         <Card className="card-hover-effect border-border/60">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs font-medium flex items-center justify-between">
-              <span>Cible perte douce</span>
+              <span>Cible perte saine</span>
               <TrendingDown className="h-4 w-4 text-emerald-500" />
             </CardDescription>
             <CardTitle className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
@@ -204,10 +224,28 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Dernières activités sportives */}
+      {/* 2. Courbe de Poids Interactive avec Recharts (lissage 7j et filtres) */}
+      <WeightChart
+        logs={weightLogs}
+        targetWeightKg={profile?.target_weight_kg}
+      />
+
+      {/* 3. Calendrier d'Activité Annuelle façon GitHub (Heatmap 52 semaines) */}
+      <ActivityHeatmap activities={activities} />
+
+      {/* 4. Bar Chart Hebdomadaire (Dépenses vs Apports sur 7 jours) */}
+      {metabolic && (
+        <WeeklyCalorieBar
+          activities={activities}
+          meals={meals}
+          dailyBaseTdee={metabolic.tdeeBase}
+        />
+      )}
+
+      {/* 5. Dernières Séances Sportives Enregistrées */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <ActivityIcon className="h-5 w-5 text-primary" />
             Dernières Séances Sportives
           </h2>
@@ -215,96 +253,53 @@ export default async function DashboardPage() {
             href="/activities"
             className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
           >
-            Voir tout le journal
+            Accéder au journal complet ({activities.length})
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        {recentActivities.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-3">
-            {recentActivities.map((act) => (
-              <Card key={act.id} className="p-4 border-border/70 card-hover-effect">
-                <div className="flex items-start justify-between">
-                  <div className="font-bold text-foreground text-sm">
-                    {act.sports?.name || "Sport"}
+        {activities.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-3">
+            {activities.slice(0, 3).map((act) => (
+              <Card key={act.id} className="p-4 border-border/70 card-hover-effect flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className="font-bold text-foreground text-sm">
+                      {act.sports?.name || "Sport"}
+                    </div>
+                    <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {formatDuration(act.duration_minutes)}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    {formatDuration(act.duration_minutes)}
-                  </span>
-                </div>
-                <div className="mt-2 text-xs font-extrabold text-foreground flex items-center gap-1">
-                  <Flame className="h-3.5 w-3.5 text-primary" />
-                  {formatCaloriesRange(
-                    act.estimated_calories_min,
-                    act.estimated_calories_max
+                  <div className="mt-2 text-xs font-extrabold text-foreground flex items-center gap-1">
+                    <Flame className="h-3.5 w-3.5 text-primary" />
+                    {formatCaloriesRange(
+                      act.estimated_calories_min,
+                      act.estimated_calories_max
+                    )}
+                  </div>
+                  {act.notes && (
+                    <p className="mt-2 text-[11px] text-muted-foreground line-clamp-2 italic">
+                      &ldquo;{act.notes}&rdquo;
+                    </p>
                   )}
                 </div>
-                {act.notes && (
-                  <p className="mt-2 text-[11px] text-muted-foreground line-clamp-2 italic">
-                    &ldquo;{act.notes}&rdquo;
-                  </p>
-                )}
+                <div className="mt-3 pt-2 border-t border-border/40 text-[10px] text-muted-foreground">
+                  {new Date(act.performed_at).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </div>
               </Card>
             ))}
           </div>
         ) : (
-          <Card className="p-6 text-center border-dashed border-border/70">
+          <Card className="p-8 text-center border-dashed border-border/70">
             <p className="text-xs text-muted-foreground">
-              Aucune activité enregistrée récemment. Cliquez sur &ldquo;Journal d&apos;activités&rdquo; pour ajouter votre séance de padel, foot ou course.
+              Aucune activité enregistrée récemment. Enregistrez un match de padel, une séance de five ou un footing pour voir apparaître vos statistiques ici !
             </p>
           </Card>
         )}
-      </div>
-
-      {/* Raccourcis Nutrition & Poids */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-border/60 p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600">
-              <Utensils className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground">
-                Nutrition Décomplexée
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Log en 5 secondes sans pesée au gramme et jauge de balance journalière.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-border/50 flex justify-end">
-            <Link href="/nutrition">
-              <Button size="sm" variant="outline" className="gap-1.5">
-                Journal de repas
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="border-border/60 p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
-              <Scale className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground">
-                Suivi du Poids & Lissage 7j
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Courbe de tendance Recharts avec moyenne mobile pour gommer les variations d&apos;eau.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-border/50 flex justify-end">
-            <Link href="/weight">
-              <Button size="sm" variant="outline" className="gap-1.5">
-                Suivre mon poids
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          </div>
-        </Card>
       </div>
     </div>
   );
